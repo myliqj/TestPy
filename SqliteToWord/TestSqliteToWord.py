@@ -7,10 +7,12 @@ from docx import Document
 from docx.oxml.ns import qn
 from docx.shared import Pt
 from docx.shared import RGBColor
+import datetime
+import sys,getopt
 
 
-#BIGANT5_DB = "D:/878DF07E-FA69-E229-E728-142691E5E3B0.db"
-BIGANT5_DB = "D:/Documents/BigAnt5/Data/878DF07E-FA69-E229-E728-142691E5E3B0/251/878DF07E-FA69-E229-E728-142691E5E3B0.db"
+BIGANT5_DB = "D:/878DF07E-FA69-E229-E728-142691E5E3B0.db"
+#BIGANT5_DB = "D:/Documents/BigAnt5/Data/878DF07E-FA69-E229-E728-142691E5E3B0/251/878DF07E-FA69-E229-E728-142691E5E3B0.db"
 
 #BIGANT5_DB = "D:/Documents/BigAnt5/Data/878DF07E-FA69-E229-E728-142691E5E3B0/251/878DF07E-FA69-E229-E728-142691E5E3B0 - 副本.db"
 
@@ -151,52 +153,59 @@ def get_sql1():
 
 
 
-# from docx.enum.style import WD_STYLE_TYPE
-# 
-# document = Document()
-# styles = document.styles
-# 
-# style = document.styles['Normal']
-# para_format = style.paragraph_format
-# print(dir(para_format),sep="\n")
-# para_format.space_after = Pt(1) 
-# para_format.space_before = Pt(1)
-# para_format.line_spacing = Pt(1);
-# para_format.line_spacing_rule = 0;
-#   
-# document.add_paragraph('Paragraph style is 中国 :aa ')
-# #生成所有段落样式
-# # for s in styles:
-# #     if s.type == WD_STYLE_TYPE.PARAGRAPH:
-# #         document.add_paragraph('Paragraph style is 中国 : '+ s.name, style = s)
-#  
-# document.save('d:\\para_style.docx')
+from docx.enum.style import WD_STYLE_TYPE
+ 
+document = Document()
+styles = document.styles
+ 
+style = document.styles['Normal']
+para_format = style.paragraph_format
+#print(dir(para_format),sep="\n")
+para_format.space_after = Pt(1) 
+para_format.space_before = Pt(1)
+para_format.line_spacing = Pt(1);
+para_format.line_spacing_rule = 0;
+   
+document.add_paragraph('Paragraph style is 中国 :aa ')
 
-def add_Text_docx(doc,mess,fontstyle=None):
+#styleT3 = None;
+#生成所有段落样式
+# for s in styles:
+#     if s.type == WD_STYLE_TYPE.PARAGRAPH:
+#         document.add_paragraph('Paragraph style is 中国 : '+ s.name, style = s)
+#         if (s.name == "Heading 3"):
+#             styleT3 = s;
+        #print(s)
+  
+#document.save('d:\\para_style.docx')
+
+def add_Text_docx(doc,mess,fontstyle=None,titlestyle=None):
     if doc == None:
         return  
     #paragraph = doc.add_paragraph()  
     #paragraph.space_after = Pt(5) 
     #paragraph.space_before = Pt(5),style='Normal'
     
-    run = doc.add_paragraph('').add_run(mess)  # 字符样式
-    run.font.name=u'宋体'
-    r = run._element
-    r.rPr.rFonts.set(qn('w:eastAsia'), u'宋体')
-    if (fontstyle == "text" or fontstyle==None or fontstyle=="at"):
-        run.font.bold = fontstyle == "at"
-        run.font.color.rgb = RGBColor(0, 0, 0)
-    elif (fontstyle in ("attach","attach_nodown") ):
-        run.font.bold = fontstyle == "attach_nodown"
-        run.font.color.rgb = RGBColor(192, 80, 0)
-    elif (fontstyle=="user"):
-        run.font.color.rgb = RGBColor(57, 108, 191)
-    elif (fontstyle=="current_user"):
-        run.font.color.rgb = RGBColor(0, 128, 0)
-    elif (fontstyle=="title"):
-        run.font.bold = True
-        run.font.color.rgb = RGBColor(0, 109, 254)
-     
+    if titlestyle == None:    
+        run = doc.add_paragraph('').add_run(mess)  # 字符样式
+        run.font.name=u'宋体'
+        r = run._element
+        r.rPr.rFonts.set(qn('w:eastAsia'), u'宋体')
+        if (fontstyle == "text" or fontstyle==None or fontstyle=="at"):
+            run.font.bold = fontstyle == "at"
+            run.font.color.rgb = RGBColor(0, 0, 0)
+        elif (fontstyle in ("attach","attach_nodown") ):
+            run.font.bold = fontstyle == "attach_nodown"
+            run.font.color.rgb = RGBColor(192, 80, 0)
+        elif (fontstyle=="user"):
+            run.font.color.rgb = RGBColor(57, 108, 191)
+        elif (fontstyle=="current_user"):
+            run.font.color.rgb = RGBColor(0, 128, 0)
+        elif (fontstyle=="title"):
+            run.font.bold = True
+            run.font.color.rgb = RGBColor(0, 109, 254)
+    else:
+        doc.add_paragraph(mess,style=titlestyle) #.add_run(mess)
         
 
 def add_Image_docx(doc,filename):
@@ -301,9 +310,9 @@ def getCoutentData(conn,val,params,doc):
                     if (os.path.isfile(filename)):
                         filestatu = ""
                         if (ext==None or ext=='' or ext=='.png' or ext=='.jpg'):
-                          isloadfile = add_Image_docx(doc,filename)
-                          if isloadfile:
-                              filestatu = "显示"
+                            isloadfile = add_Image_docx(doc,filename)
+                            if isloadfile:
+                                filestatu = "显示"
                     else:
                         filestatu = "不存在"
 
@@ -347,7 +356,8 @@ def getMessText(conn,params,doc):
             #c_str = c_str + "\n" + c_msg_row["Sender_Name"] + " (" + c_msg_row["rq"] +")\n";
             username = c_msg_row["Sender_Name"]
             add_Text_docx(doc,"{} ({})".format(username ,c_msg_row["rq"])
-                          ,("current_user" if username==CURRENT_USER_NAME else "user"))
+                          ,("current_user" if username==CURRENT_USER_NAME else "user")
+                          )
             
             #c_str = c_str + 
             getCoutentData(conn,c_msg_row["Content_data"],{"msg_id":c_msg_row["MSG_ID"]},doc)
@@ -370,7 +380,7 @@ def getMessText(conn,params,doc):
             c_msg_cursor.close()
 
 
-def getSessionBigAnt5(rq,fileName):
+def getSessionBigAnt5(ksrq,jsrq,fileName):
 #     rq = '2019-01-24'
 #     sessionSql = """
 #       select a.sender_id,a.Sender_Name,a.RECV_ID,a.RECV_Name,count(1) c,count(case when a.attach_count>0 then 1 end) has_attach 
@@ -408,9 +418,7 @@ def getSessionBigAnt5(rq,fileName):
     union all
     select * from a 
     where not exists(select 1 from b where a.id=b.id and a.name=b.name)     """
-    
-    
-    params = {"rq":rq}
+       
     
     
     if os.path.isfile(fileName):
@@ -440,70 +448,84 @@ def getSessionBigAnt5(rq,fileName):
     conn = getConn(db_name=BIGANT5_DB)
     conn.row_factory = dict_factory
     try:
-        curr_row = 0
-        sessionCount = int(show_tab_local(conn,sessionUserSql+" select count(1) sl from ("+resultSql+") t",params,"sl"))
-        if (sessionCount<=0):
-            print("日期 " + rq + " 无用户会话！")
-        else:  
-            cursor = open_sql(conn,sessionUserSql+ " " + resultSql, params)
-            try:                 
-                curr_row = 0     
-                for row in cursor:
-                    curr_row = curr_row + 1;
-                    print("用户会话:"+str(curr_row) +"/" + str(sessionCount) + " " + row['name'])
-                    
-                    params = {"SENDER_ID": row['id'], "SENDER_NAME": row['name']
-                             ,"RECV_ID": CURRENT_USER_ID, "RECV_NAME":CURRENT_USER_NAME
-                             ,"rq":rq}
-                    
-                    add_Text_docx(doc,"\n **[用户] {} ** {}/{}".format(row['name'],curr_row,sessionCount) + "","title")
-                    
-                    #mess = 
-                    getMessText(conn,params,doc)
-                    #mess = "\n\n ** {}  ".format(row['name']) + "\n" + mess
-                    #print(mess)
-            finally: 
-                if cursor:
-                    cursor.close()
-        #### group message #####
-        
-        groupSql = """
-        select datetime(a.Send_Date/1000000, 'unixepoch', 'localtime') rq,a.*{} from ant_GroupMsg a  
-        where datetime(a.Send_Date/1000000, 'unixepoch', 'localtime') like '{}%' {}
-        """
-           
-        """
-          <BTF><Font name="宋体" size="15" clr="0" flags="1" /><at>160;张勇</at><Text>勇哥，应该是系统问题吧，之前没有结算过的</Text></BTF>
-          <BTF><Font name="宋体" size="15" clr="0" flags="1" /><Text>是不是可以直接修改？</Text></BTF>
-          <BTF><Font name="宋体" size="15" clr="0" flags="1" /><File name="F8A433C6-0E6A-11E9-9250-001BB9DED73E.png" size="5096"  fshost="FileServer_Default" type="2">F8A433C6-0E6A-11E9-9250-001BB9DED73E.png;096095890E6B11E99250001BB9DED73E</File><Text>这个是之前办结的，都是按自费处理</Text></BTF>
-        """  
-        sessionCount = int(show_tab_local(conn," select count(distinct Group_Name) sl from ("+groupSql.format("",rq,"")+") t",None,"sl"))
-        if (sessionCount<=0):
-            print("日期 " + rq + " 无讨论组会话！")
-        else:        
-            # ,row_number() over(partition by a.group_name) n
-            cursor = open_sql(conn,groupSql.format("",rq," order by a.group_name,a.send_date"), params)
-            try:
-                curr_row = group_curr_row = 0                
-                p_group_name = ""     
-                for row in cursor:
-                    curr_row = curr_row + 1;
-                    if (curr_row==1 or p_group_name!=row["Group_Name"]):
-                        p_group_name = row["Group_Name"]
-                        group_curr_row = group_curr_row  + 1;
-                        print("讨论组会话:"+str(group_curr_row) +"/" + str(sessionCount) + ' ' + p_group_name)
-                        add_Text_docx(doc,"\n **讨论组 {} ** {}/{}".format(p_group_name,group_curr_row,sessionCount) + "","title")
-                     
-                    
-                    username = row["Sender_Name"]
-                    add_Text_docx(doc,"{} ({})".format(username ,row["rq"])
-                              ,("current_user" if username==CURRENT_USER_NAME else "user"))   
-                    getCoutentData(conn,row["MSG_Data"],{"msg_id":row["MSG_ID"]},doc)
-                    
-            finally: 
-                if cursor:
-                    cursor.close()
-    
+        while ksrq <= jsrq:               
+            rq = ksrq.isoformat() # yyyy-mm-dd 格式     
+            params = {"rq":rq}
+            print("====start " + rq)
+            
+            curr_row = 0
+            sessionCount = int(show_tab_local(conn,sessionUserSql+" select count(1) sl from ("+resultSql+") t",params,"sl"))
+            if (sessionCount<=0):
+                print("日期 " + rq + " 无用户会话！")
+            else:
+                add_Text_docx(doc,"{}".format(rq),"title","Heading 2")
+                
+                cursor = open_sql(conn,sessionUserSql+ " " + resultSql, params)
+                try:                 
+                    curr_row = 0     
+                    for row in cursor:
+                        curr_row = curr_row + 1;
+                        print("用户会话:"+str(curr_row) +"/" + str(sessionCount) + " " + row['name'])
+                        
+                        params = {"SENDER_ID": row['id'], "SENDER_NAME": row['name']
+                                 ,"RECV_ID": CURRENT_USER_ID, "RECV_NAME":CURRENT_USER_NAME
+                                 ,"rq":rq}
+                        
+                        add_Text_docx(doc,"[用户] {} * {}/{}".format(row['name'],curr_row,sessionCount) + ""
+                                      ,"title","Heading 3")
+                        
+                        #mess = 
+                        getMessText(conn,params,doc)
+                        #mess = "\n\n ** {}  ".format(row['name']) + "\n" + mess
+                        #print(mess)
+                finally: 
+                    if cursor:
+                        cursor.close()
+            #### group message #####
+            
+            groupSql = """
+            select datetime(a.Send_Date/1000000, 'unixepoch', 'localtime') rq,a.*{} from ant_GroupMsg a  
+            where datetime(a.Send_Date/1000000, 'unixepoch', 'localtime') like '{}%' {}
+            """
+               
+            """
+              <BTF><Font name="宋体" size="15" clr="0" flags="1" /><at>160;张勇</at><Text>勇哥，应该是系统问题吧，之前没有结算过的</Text></BTF>
+              <BTF><Font name="宋体" size="15" clr="0" flags="1" /><Text>是不是可以直接修改？</Text></BTF>
+              <BTF><Font name="宋体" size="15" clr="0" flags="1" /><File name="F8A433C6-0E6A-11E9-9250-001BB9DED73E.png" size="5096"  fshost="FileServer_Default" type="2">F8A433C6-0E6A-11E9-9250-001BB9DED73E.png;096095890E6B11E99250001BB9DED73E</File><Text>这个是之前办结的，都是按自费处理</Text></BTF>
+            """  
+            sessionCount = int(show_tab_local(conn," select count(distinct Group_Name) sl from ("+groupSql.format("",rq,"")+") t",None,"sl"))
+            if (sessionCount<=0):
+                print("日期 " + rq + " 无讨论组会话！")
+            else:      
+                if curr_row==0:
+                    add_Text_docx(doc,"{}".format(rq),"title","Heading 2")
+                  
+                # ,row_number() over(partition by a.group_name) n
+                cursor = open_sql(conn,groupSql.format("",rq," order by a.group_name,a.send_date"), params)
+                try:
+                    curr_row = group_curr_row = 0                
+                    p_group_name = ""     
+                    for row in cursor:
+                        curr_row = curr_row + 1;
+                        if (curr_row==1 or p_group_name!=row["Group_Name"]):
+                            p_group_name = row["Group_Name"]
+                            group_curr_row = group_curr_row  + 1;
+                            print("讨论组会话:"+str(group_curr_row) +"/" + str(sessionCount) + ' ' + p_group_name)
+                            add_Text_docx(doc,"[讨论组] {} * {}/{}".format(p_group_name,group_curr_row,sessionCount) + ""
+                                          ,"title"
+                                          ,"Heading 3")
+                         
+                        
+                        username = row["Sender_Name"]
+                        add_Text_docx(doc,"{} ({})".format(username ,row["rq"])
+                                  ,("current_user" if username==CURRENT_USER_NAME else "user"))   
+                        getCoutentData(conn,row["MSG_Data"],{"msg_id":row["MSG_ID"]},doc)
+                        
+                finally: 
+                    if cursor:
+                        cursor.close()
+            # 日期 增加1天
+            ksrq = ksrq + datetime.timedelta(days = 1)
     
         doc.save(fileName)  
         print("\n文件 ["+fileName+"] 保存成功。")  
@@ -514,25 +536,81 @@ def getSessionBigAnt5(rq,fileName):
             conn.close()
 
 
-def getGroupMsg(rq):
-    groupSql = """
-    select datetime(a.Send_Date/1000000, 'unixepoch', 'localtime') rq,a.* from ant_UserMsg a  
-    where datetime(a.Send_Date/1000000, 'unixepoch', 'localtime') like '{}%'
-    order by a.send_date;
-    """.format(rq)
+# def getGroupMsg(rq):
+#     groupSql = """
+#     select datetime(a.Send_Date/1000000, 'unixepoch', 'localtime') rq,a.* from ant_UserMsg a  
+#     where datetime(a.Send_Date/1000000, 'unixepoch', 'localtime') like '{}%'
+#     order by a.send_date;
+#     """.format(rq)
        
-    """
-      <BTF><Font name="宋体" size="15" clr="0" flags="1" /><at>160;张勇</at><Text>勇哥，应该是系统问题吧，之前没有结算过的</Text></BTF>
-      <BTF><Font name="宋体" size="15" clr="0" flags="1" /><Text>是不是可以直接修改？</Text></BTF>
-      <BTF><Font name="宋体" size="15" clr="0" flags="1" /><File name="F8A433C6-0E6A-11E9-9250-001BB9DED73E.png" size="5096"  fshost="FileServer_Default" type="2">F8A433C6-0E6A-11E9-9250-001BB9DED73E.png;096095890E6B11E99250001BB9DED73E</File><Text>这个是之前办结的，都是按自费处理</Text></BTF>
-    """   
-        
+#     """
+#       <BTF><Font name="宋体" size="15" clr="0" flags="1" /><at>160;张勇</at><Text>勇哥，应该是系统问题吧，之前没有结算过的</Text></BTF>
+#       <BTF><Font name="宋体" size="15" clr="0" flags="1" /><Text>是不是可以直接修改？</Text></BTF>
+#       <BTF><Font name="宋体" size="15" clr="0" flags="1" /><File name="F8A433C6-0E6A-11E9-9250-001BB9DED73E.png" size="5096"  fshost="FileServer_Default" type="2">F8A433C6-0E6A-11E9-9250-001BB9DED73E.png;096095890E6B11E99250001BB9DED73E</File><Text>这个是之前办结的，都是按自费处理</Text></BTF>
+#     """   
+ 
+def usage():
+    print("使用： " + sys.argv[0] + " [参数] ")
+    print("  例子: -k 2019-01-01 -j 2019-02-03 -o aa.docx -h --help")
+    print("  -h/--help 显示帮助")    
+    print("  -o 输出文件名, 不指定默认 当前目录 bigant5_ksrq_jsrq.docx")
+    print("  -k 开始日期 ，格式：yyyy-mm-dd , 默认今天")
+    print("  -j 结束日期，格式：yyyy-mm-dd , 默认今天")    
 
 if __name__ == '__main__':
     #show_attach_text(None,""" and msg_id in ('66FEE5CC-1FA1-11E9-848F-99944746267A',
     #'66FEE5CD-1FA1-11E9-848F-99944746267A','DFC95E50-1FA5-11E9-90E5-005056C00008','4B36FB7C-1FA6-11E9-848F-99944746267A')""")
     #show_attach_text("66FEE5CD-1FA1-11E9-848F-99944746267A",None)
-    getSessionBigAnt5("2019-03-02","d:/bigant5_2019-03-02_all.docx")
+    #getSessionBigAnt5("2019-03-02","d:/bigant5_2019-03-02_all.docx")
+    
+    ksrq = datetime.date.today()
+    jsrq = datetime.date.today()
+    fileName = None
+    opts, args = getopt.getopt(sys.argv[1:], "ho:k:j:", ["help"])
+    for op, value in opts:
+        if op=="-o":
+            fileName = value
+        elif op=="-k":
+            ksrq = datetime.datetime.strptime(value,"%Y-%m-%d").date()
+        elif op=="-j":
+            jsrq = datetime.datetime.strptime(value,"%Y-%m-%d").date()
+        elif op == "-h" or op=="--help":
+            usage()
+            sys.exit()
+    if ksrq>jsrq:
+        print("结束日期大于开始日期，请重新操作。")
+        sys.exit()
+        
+    if fileName is None or fileName=='':
+        fileName = "bigant5_{}_{}.docx".format(ksrq.isoformat(),jsrq.isoformat())
+        
+    print("ksrq={},jsrq={},fileName={}".format(ksrq,jsrq,fileName))
+    getSessionBigAnt5(ksrq,jsrq,fileName)
+
+
+
+
+#getSessionBigAnt5("2019-01-25","d:/bigant5_2019-01-25_a1.docx")
+
+#import datetime
+
+# curDay = datetime.date.today();
+# curDay1 = curDay + datetime.timedelta(days = 1)
+# print(curDay)
+# print(curDay1)
+
+#ksrq = datetime.date(2019,1,23)
+#jsrq = datetime.date(2019,1,25)
+#fileName = "d:/bigant5_{}-{}.docx".format(ksrq.isoformat(),jsrq.isoformat())
+#getSessionBigAnt5(ksrq,jsrq,fileName)
+
+#d2 = datetime.datetime.strptime("2019-03-12","%Y-%m-%d");
+#print(d2 , d2 + datetime.timedelta(days = 1))
+
+
+#datetime.date(2017,3,22).strftime("%Y%m%d") #'20170322'
+#datetime.time(12,20,59,899).strftime('%H:%M:%S') # '12:20:59'
+#datetime.time(12,20,59,899).isoformat() #'12:20:59.000899'
     
     ## 通过导入 builtins 模块，可以获得内置函数、异常和其他对象的列表
 #     import builtins
