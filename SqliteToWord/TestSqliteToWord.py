@@ -9,7 +9,11 @@ from docx.shared import Pt
 from docx.shared import RGBColor
 
 
-BIGANT5_DB = "D:/878DF07E-FA69-E229-E728-142691E5E3B0.db"
+#BIGANT5_DB = "D:/878DF07E-FA69-E229-E728-142691E5E3B0.db"
+BIGANT5_DB = "D:/Documents/BigAnt5/Data/878DF07E-FA69-E229-E728-142691E5E3B0/251/878DF07E-FA69-E229-E728-142691E5E3B0.db"
+
+#BIGANT5_DB = "D:/Documents/BigAnt5/Data/878DF07E-FA69-E229-E728-142691E5E3B0/251/878DF07E-FA69-E229-E728-142691E5E3B0 - 副本.db"
+
 BIGANT5_FILE_SQL = "D:/test_sql.txt"
 
 CURRENT_USER_NAME = "李青健"
@@ -262,8 +266,8 @@ def getFileFullName(conn,params):
             
 def getCoutentData(conn,val,params,doc):
     """ val (ant_Msg_Content.Content_data)
-                        无文件时：<BTF><Font name="宋体" size="15" clr="0" flags="1" /><Text>XXX</Text></BTF>
-                        有文件时：<BTF><Font name="宋体" size="15" clr="0" flags="1" /><File name="F1E98F5A-1F8A-11E9-8A2D-94C691204229.png" size="102865"  fshost="200.10.10.200:6667" type="0">F1E98F5A-1F8A-11E9-8A2D-94C691204229.png;66FEE5CE1FA111E9848F99944746267A</File></BTF>
+          无文件时：<BTF><Font name="宋体" size="15" clr="0" flags="1" /><Text>XXX</Text></BTF>
+          有文件时：<BTF><Font name="宋体" size="15" clr="0" flags="1" /><File name="F1E98F5A-1F8A-11E9-8A2D-94C691204229.png" size="102865"  fshost="200.10.10.200:6667" type="0">F1E98F5A-1F8A-11E9-8A2D-94C691204229.png;66FEE5CE1FA111E9848F99944746267A</File></BTF>
     """
     tree = ET.ElementTree(ET.XML(val));
     output = ""
@@ -294,10 +298,14 @@ def getCoutentData(conn,val,params,doc):
                 else:
                     isloadfile = False
                     ext = os.path.splitext(filename)[1]
-                    if (os.path.isfile(filename)) and (ext==None or ext=='' or ext=='.png' or ext=='.jpg'):
-                        isloadfile = add_Image_docx(doc,filename)
-                        if isloadfile:
-                            filestatu = ""  
+                    if (os.path.isfile(filename)):
+                        filestatu = ""
+                        if (ext==None or ext=='' or ext=='.png' or ext=='.jpg'):
+                          isloadfile = add_Image_docx(doc,filename)
+                          if isloadfile:
+                              filestatu = "显示"
+                    else:
+                        filestatu = "不存在"
 
                 add_Text_docx(doc,"[({}KB) 文件:{}] {}".format(fsize, filename, filestatu) ,filestyle) 
                
@@ -396,7 +404,10 @@ def getSessionBigAnt5(rq,fileName):
     where exists(select 1 from b where a.id=b.id and a.name=b.name) 
     union all
     select * from b 
-    where not exists(select 1 from a where a.id=b.id and a.name=b.name) """
+    where not exists(select 1 from a where a.id=b.id and a.name=b.name)
+    union all
+    select * from a 
+    where not exists(select 1 from b where a.id=b.id and a.name=b.name)     """
     
     
     params = {"rq":rq}
@@ -480,7 +491,7 @@ def getSessionBigAnt5(rq,fileName):
                     if (curr_row==1 or p_group_name!=row["Group_Name"]):
                         p_group_name = row["Group_Name"]
                         group_curr_row = group_curr_row  + 1;
-                        print("讨论组会话:"+str(group_curr_row) +"/" + str(sessionCount))
+                        print("讨论组会话:"+str(group_curr_row) +"/" + str(sessionCount) + ' ' + p_group_name)
                         add_Text_docx(doc,"\n **讨论组 {} ** {}/{}".format(p_group_name,group_curr_row,sessionCount) + "","title")
                      
                     
@@ -521,7 +532,7 @@ if __name__ == '__main__':
     #show_attach_text(None,""" and msg_id in ('66FEE5CC-1FA1-11E9-848F-99944746267A',
     #'66FEE5CD-1FA1-11E9-848F-99944746267A','DFC95E50-1FA5-11E9-90E5-005056C00008','4B36FB7C-1FA6-11E9-848F-99944746267A')""")
     #show_attach_text("66FEE5CD-1FA1-11E9-848F-99944746267A",None)
-    getSessionBigAnt5("2019-01-24","d:/bigant5_2019-01-24_all.docx")
+    getSessionBigAnt5("2019-03-02","d:/bigant5_2019-03-02_all.docx")
     
     ## 通过导入 builtins 模块，可以获得内置函数、异常和其他对象的列表
 #     import builtins
