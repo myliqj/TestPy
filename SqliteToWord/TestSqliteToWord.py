@@ -11,8 +11,8 @@ import datetime
 import sys,getopt
 
 
-BIGANT5_DB = "D:/878DF07E-FA69-E229-E728-142691E5E3B0.db"
-#BIGANT5_DB = "D:/Documents/BigAnt5/Data/878DF07E-FA69-E229-E728-142691E5E3B0/251/878DF07E-FA69-E229-E728-142691E5E3B0.db"
+#BIGANT5_DB = "D:/878DF07E-FA69-E229-E728-142691E5E3B0.db"
+BIGANT5_DB = "D:/Documents/BigAnt5/Data/878DF07E-FA69-E229-E728-142691E5E3B0/251/878DF07E-FA69-E229-E728-142691E5E3B0.db"
 
 #BIGANT5_DB = "D:/Documents/BigAnt5/Data/878DF07E-FA69-E229-E728-142691E5E3B0/251/878DF07E-FA69-E229-E728-142691E5E3B0 - 副本.db"
 
@@ -379,7 +379,19 @@ def getMessText(conn,params,doc):
         if c_msg_cursor:
             c_msg_cursor.close()
 
-
+def get_week_day(date):
+    week_day_dict = {
+      0 : '星期一',
+      1 : '星期二',
+      2 : '星期三',
+      3 : '星期四',
+      4 : '星期五',
+      5 : '星期六',
+      6 : '星期天',
+    }
+    day = date.weekday()
+    return week_day_dict[day]
+  
 def getSessionBigAnt5(ksrq,jsrq,fileName):
 #     rq = '2019-01-24'
 #     sessionSql = """
@@ -420,6 +432,16 @@ def getSessionBigAnt5(ksrq,jsrq,fileName):
     where not exists(select 1 from b where a.id=b.id and a.name=b.name)     """
        
     
+    groupSql = """
+    select datetime(a.Send_Date/1000000, 'unixepoch', 'localtime') rq,a.*{} from ant_GroupMsg a  
+    where datetime(a.Send_Date/1000000, 'unixepoch', 'localtime') like '{}%' {}
+    """
+       
+    """
+      <BTF><Font name="宋体" size="15" clr="0" flags="1" /><at>160;张勇</at><Text>勇哥，应该是系统问题吧，之前没有结算过的</Text></BTF>
+      <BTF><Font name="宋体" size="15" clr="0" flags="1" /><Text>是不是可以直接修改？</Text></BTF>
+      <BTF><Font name="宋体" size="15" clr="0" flags="1" /><File name="F8A433C6-0E6A-11E9-9250-001BB9DED73E.png" size="5096"  fshost="FileServer_Default" type="2">F8A433C6-0E6A-11E9-9250-001BB9DED73E.png;096095890E6B11E99250001BB9DED73E</File><Text>这个是之前办结的，都是按自费处理</Text></BTF>
+    """  
     
     if os.path.isfile(fileName):
         print("文件["+fileName+"]已存在 ，退出！")
@@ -451,14 +473,21 @@ def getSessionBigAnt5(ksrq,jsrq,fileName):
         while ksrq <= jsrq:               
             rq = ksrq.isoformat() # yyyy-mm-dd 格式     
             params = {"rq":rq}
-            print("====start " + rq)
             
             curr_row = 0
+            
+            # 讨论组会话数量
+            sessionCount_g = int(show_tab_local(conn," select count(distinct Group_Name) sl from ("+groupSql.format("",rq,"")+") t",None,"sl"))
+            
+            # 用户组会话数量
             sessionCount = int(show_tab_local(conn,sessionUserSql+" select count(1) sl from ("+resultSql+") t",params,"sl"))
+            
+            print("====start {} {} {}".format(rq,get_week_day(ksrq),sessionCount_g+sessionCount))
+            
             if (sessionCount<=0):
                 print("日期 " + rq + " 无用户会话！")
             else:
-                add_Text_docx(doc,"{}".format(rq),"title","Heading 2")
+                add_Text_docx(doc,"{} {} {}".format(rq,get_week_day(ksrq),sessionCount_g+sessionCount),"title","Heading 2")
                 
                 cursor = open_sql(conn,sessionUserSql+ " " + resultSql, params)
                 try:                 
@@ -483,22 +512,12 @@ def getSessionBigAnt5(ksrq,jsrq,fileName):
                         cursor.close()
             #### group message #####
             
-            groupSql = """
-            select datetime(a.Send_Date/1000000, 'unixepoch', 'localtime') rq,a.*{} from ant_GroupMsg a  
-            where datetime(a.Send_Date/1000000, 'unixepoch', 'localtime') like '{}%' {}
-            """
-               
-            """
-              <BTF><Font name="宋体" size="15" clr="0" flags="1" /><at>160;张勇</at><Text>勇哥，应该是系统问题吧，之前没有结算过的</Text></BTF>
-              <BTF><Font name="宋体" size="15" clr="0" flags="1" /><Text>是不是可以直接修改？</Text></BTF>
-              <BTF><Font name="宋体" size="15" clr="0" flags="1" /><File name="F8A433C6-0E6A-11E9-9250-001BB9DED73E.png" size="5096"  fshost="FileServer_Default" type="2">F8A433C6-0E6A-11E9-9250-001BB9DED73E.png;096095890E6B11E99250001BB9DED73E</File><Text>这个是之前办结的，都是按自费处理</Text></BTF>
-            """  
-            sessionCount = int(show_tab_local(conn," select count(distinct Group_Name) sl from ("+groupSql.format("",rq,"")+") t",None,"sl"))
+            sessionCount = sessionCount_g # int(show_tab_local(conn," select count(distinct Group_Name) sl from ("+groupSql.format("",rq,"")+") t",None,"sl"))
             if (sessionCount<=0):
                 print("日期 " + rq + " 无讨论组会话！")
-            else:      
+            else:
                 if curr_row==0:
-                    add_Text_docx(doc,"{}".format(rq),"title","Heading 2")
+                    add_Text_docx(doc,"{} {} {}".format(rq,get_week_day(ksrq),sessionCount),"title","Heading 2")
                   
                 # ,row_number() over(partition by a.group_name) n
                 cursor = open_sql(conn,groupSql.format("",rq," order by a.group_name,a.send_date"), params)
